@@ -1,0 +1,31 @@
+body {
+	width:870px;
+	margin:1px auto;
+}
+
+header {
+	margin:1px;
+	padding:1px;
+	border:1px solid #ccc;
+
+	text-align:center;
+	font-size:8px;
+
+	background : #bbffdd;
+}
+
+article {
+	width:864px;
+	margin:1px auto;
+	padding:2px;
+	border:1px solid #ccc;
+
+	float:right;
+	text-align: center;
+
+	background : #bbffdd;
+}
+
+canvas {
+  border : solid 2px #aaaaaa;
+}
