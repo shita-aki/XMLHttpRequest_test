@@ -24,7 +24,7 @@ function httpPrint (request, response) {
 		case "xhr00.css":
 			responseHttp(response, request.url, "text/css");
 			break;
-		case "xhr-test.js":
+		case "xhr-test-text.js":
 			responseXMLHttpReq(response, "text/plane");
 			break;
 		default:
@@ -39,7 +39,8 @@ function responseXMLHttpReq (response, contentType) {
  */
 
 	response.writeHead(200, {'Content-Type': contentType});
-	response.write("XMLHTTPRequestのテストです");
+	response.write("XMLHTTPRequestのテストです。");
+	response.write("canvasをクリックしてください。");
 	response.end();
 }
 
