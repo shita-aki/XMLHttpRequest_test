@@ -13,8 +13,8 @@ function httpPrint (request, response) {
 
 	console.log(request.url); /*リクエストURLをコンソールに表示 */
 
-	/* とりあえず、jsとcssはファイル名狙い撃ちで読み込んで送信。
-	 * それ以外リクエストにはhelloworld.htmlを送信。
+	/* とりあえず、リクエストされるURLは分かってるので、それ前提でリクエストURL毎の処理を書いた。
+	 * 基本、リクエストURL毎にContentTypeを設定して、送信処理を呼び出している。
      */
     var murl = request.url.split("/");
 	switch (murl[murl.length-1]) {
@@ -25,40 +25,96 @@ function httpPrint (request, response) {
 			responseHttp(response, request.url, "text/css");
 			break;
 		case "xhr-test-text.js":
-			responseXMLHttpReq(response, "text/plane");
+			responseXMLHttpReqT(response, "text/plane");
+			break;
+		case "xhr-test-image.js":
+			responseXMLHttpReqI(response, "text/plane");
 			break;
 		default:
-			responseHttp(response, "/xhr00.html", "text/html");
+			/* 画像だけファイル中に番号が入ってるから別処理 */
+			var mmurl = murl[murl.length-1].split(".");
+			switch (mmurl[mmurl.length-1]) {
+				case "png":
+					responseHttpImage(response, request.url, "image/png");
+					break;
+				default:
+				/* どれにも当てはまらないリクエストURLの処理 */
+					responseHttp(response, "/xhr00.html", "text/html");
+					break;
+			}
+			break;
 	}
 }
 
-function responseXMLHttpReq (response, contentType) {
-/* XMLHTTPRequestに対して応答する。
+function responseXMLHttpReqT (response, contentType) {
+/* XMLHTTPRequestに対してテキストを送信する。
  *	response   :レスポンスオブジェクト
  *	contentType:送信するデータのコンテントタイプ
  */
-
 	response.writeHead(200, {'Content-Type': contentType});
 	response.write("XMLHTTPRequestのテストです。");
 	response.write("canvasをクリックしてください。");
 	response.end();
 }
 
+/* Pingファイル名を作成する関数。
+ * クロージャ使ってファイル名中の番号をカウントしてる。
+ */
+var PingFileName = (function () {
+	var number = -1;
+	return (function () {
+		number++;
+		if (4 < number) number = 0; 
+		return ("/images/xhr0" + number.toString() + ".png");
+	});
+})();
+
+function responseXMLHttpReqI (response, contentType) {
+/* XMLHTTPRequestに対して画像ファイル名を応答する。
+ *	response   :レスポンスオブジェクト
+ *	contentType:送信するデータのコンテントタイプ
+ */
+	response.writeHead(200, {'Content-Type': contentType});
+	response.write(PingFileName() /*"/images/xhr" + "00" + ".png"*/);
+	response.end();
+}
+
 function responseHttp (response, url, contentType) {
-/* ファイルを送信する。
+/* hmtl、css、js の各ファイルを送信する。
  *	response   :レスポンスオブジェクト
  *	url        :ファイルのドキュメントルートからのURL
  *	contentType:送信するデータのコンテントタイプ
  */
-
-	/*
-	 * ファイルを読み込んで、status code と content type 設定して送信。
-	 */
+	/* ファイルを読み込んで、status code と content type 設定してテキストデータを送信。 */
 	myHttpF.readFile("./public" + url, 'UTF-8',
 		function(err, data){
 		/* ファイル読み込めた場合のコールバック関数 */
 			response.writeHead(200, {'Content-Type': contentType});
 			response.write(data);
 			response.end();
+		});
+}
+
+function responseHttpImage (response, url, contentType) {
+/* 画像ファイルを送信する。
+ *	response   :レスポンスオブジェクト
+ *	url        :ファイルのドキュメントルートからのURL
+ *	contentType:送信するデータのコンテントタイプ
+ */
+	/* ファイルを読み込んで、status code と content type 設定して画像ファイルを送信。
+	 * Base64でファイル読んで、Base64でResponseするんだねぇ、適当にやってちょっとはまった。
+	 * httpを分かってない証拠だ…。
+	 */
+	myHttpF.readFile("." + url, "base64",
+		function(err, data){
+		/* ファイル読み込めた場合のコールバック関数 */
+			if (err) {
+				/* はまった時の名残。エラーになった時のerr表示処理 */
+				console.log(err);
+			} else {
+				response.writeHead(200, {'Content-Type': contentType});
+				response.write(data, "base64");
+				response.end();
+			}
 		});
 }
